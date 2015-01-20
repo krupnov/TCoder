@@ -1,13 +1,8 @@
 package org.coder;
 
-624672242
-
-19154
-
 public class SequencePermutation {
 
 	private static final int mod = 1000000009;
-	
 	private int[][] mem = null;
 
 	public int determineConfigurations(int N, int M) {
@@ -20,23 +15,20 @@ public class SequencePermutation {
 		}
 		
 		for (int i = 3 ; i <= N ; ++i) {
-			for (int j = 1 ; j <= M ; ++j) {
-				for (int k = 0 ; k <= j && k <= i -1 ; ++k) {
-					mem[i][j] = (mem[i][j] + mem[i - 1][j - k]) % mod;
-				}
+			mem[i][1] = (mem[i - 1][0] + mem[i -1][1]) % mod;
+			for (int j = 2 ; j <= M ; ++j) {
+				
+				mem[i][j] = ((mem[i][j -1] + mem[i - 1][j]) % mod - (j >= i ? mem[i - 1][j - i] : 0))  % mod;
 			}
 		}
 		
-		return mem[N][M];
+		return mem[N][M] > 0 ? mem[N][M] : mod + mem[N][M];
 	}
-	
+
 	public static void main(String[] args) {
-		long startTime = System.nanoTime();
+		
 		SequencePermutation perm = new SequencePermutation();
 		
 		System.out.println(perm.determineConfigurations(2000, 2000));
-		long endTime = System.nanoTime();
-		
-		System.out.println((endTime - startTime) / 1000000);
 	}
 }
