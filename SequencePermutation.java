@@ -1,41 +1,42 @@
 package org.coder;
 
+624672242
+
+19154
+
 public class SequencePermutation {
 
 	private static final int mod = 1000000009;
 	
-	private Integer[][] mem = null;
+	private int[][] mem = null;
 
 	public int determineConfigurations(int N, int M) {
-		mem = new Integer[N + 1][M + 1];
+		mem = new int[N + 1][M + 1];
 		for (int i = 0 ; i < N + 1 ; ++i) {
 			mem[i][0] = 1;
 		}
-		for (int i = 0 ; i <M + 1 ; ++i) {
+		for (int i = 0 ; i < M + 1 ; ++i) {
 			mem[2][i] = 1;
 		}
-		return f(N, M);
-	}
-	
-	private int f(int N, int M) {
 		
-		if (mem[N][M] != null) {
-			return mem[N][M];
+		for (int i = 3 ; i <= N ; ++i) {
+			for (int j = 1 ; j <= M ; ++j) {
+				for (int k = 0 ; k <= j && k <= i -1 ; ++k) {
+					mem[i][j] = (mem[i][j] + mem[i - 1][j - k]) % mod;
+				}
+			}
 		}
 		
-		int result = 0;
-		for (int i = 0 ; i <= M && i <= N - 1 ; ++i) {
-			result = (result + f(N - 1, M - i)) % mod;
-		}
-		
-		mem[N][M] = result;
-		return result;
+		return mem[N][M];
 	}
 	
 	public static void main(String[] args) {
-		
+		long startTime = System.nanoTime();
 		SequencePermutation perm = new SequencePermutation();
 		
 		System.out.println(perm.determineConfigurations(2000, 2000));
+		long endTime = System.nanoTime();
+		
+		System.out.println((endTime - startTime) / 1000000);
 	}
 }
