@@ -1,0 +1,95 @@
+package coder;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.nio.charset.Charset;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
+
+public class PairPartitioner {
+	
+	public static String BASE_PATH = "/home/ilya/Downloads/sentences/";
+	public static String PARTITIONING_PATH = BASE_PATH + "pairwise/";
+	private static final int  mod = 10000;
+	private static SortedMap<String, List<String>> outputBuffer = new TreeMap<String, List<String>>();
+	private static long bufferSize = 0;
+	private static final int BufferThreshold = 500*1024*1024;
+	
+	public static void main(String[] args) throws IOException {
+		
+		InputStream input = new FileInputStream(BASE_PATH + "sentences.txt");
+		InputStreamReader reader = new InputStreamReader(input, Charset.forName("UTF-8"));
+		BufferedReader buffer = new BufferedReader(reader);
+		try {
+			String line = null;
+			long lineNumber = 0;
+			buffer.skip(2);
+			while((line = buffer.readLine()) != null) {
+				putInFileAccordingToLength(line);
+				System.out.println(lineNumber);
+				lineNumber++;
+				buffer.skip(Long.toString(lineNumber).length() + 1);
+			}
+		} catch(IOException e) {
+			System.out.println(e);
+			throw e;
+		} finally {
+			buffer.close();
+		}
+		for (String bufFile : outputBuffer.keySet()) {
+			printToFile(bufFile, outputBuffer.get(bufFile));
+		}
+	}
+
+	private static void putInFileAccordingToLength(String line) throws IOException {
+		printToFileBuffered(line, Integer.toString(getCount(line, 'a', 'n')));
+		printToFileBuffered(line, Integer.toString(getCount(line, 'o', 'z')));
+	}
+
+	private static int getCount(String line, char start, char end) {
+		int result = 0;
+		for (int i = 0 ; i < line.length(); ++i) {
+			if (line.charAt(i) >= start && line.charAt(i) <= end) {
+				result = (result + 611 *(line.charAt(i) - 'a')) % mod;
+			}
+		}
+		return result;
+	}
+
+	private static void printToFileBuffered(String line, String file) throws IOException {
+		
+		if (!outputBuffer.containsKey(file)) {
+			outputBuffer.put(file, new LinkedList<String>());
+		}
+		
+		outputBuffer.get(file).add(line);
+		bufferSize += line.length();
+		
+		if (bufferSize > BufferThreshold) {
+			for (String bufFile : outputBuffer.keySet()) {
+				printToFile(bufFile, outputBuffer.get(bufFile));
+			}
+			bufferSize = 0;
+			outputBuffer = new TreeMap<String, List<String>>();
+		}
+	}
+	
+	private static void printToFile(String file, List<String> lines) throws IOException {
+		PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(PARTITIONING_PATH + file, true)));
+		try {
+			for (String line : lines) {
+				out.println(line);
+			}
+		} finally {
+			out.close();
+		}
+	}
+}
