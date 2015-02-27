@@ -1,4 +1,4 @@
-package coder;
+package org.coder;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
