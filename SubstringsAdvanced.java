@@ -1,10 +1,11 @@
-package topcoder;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-
-public class SubstringsAdvanced {
+import java.util.Arrays;
+ 
+public class Main {
+	
+	private static int[] indexes;
 	
 	public static void main(String[] args) throws NumberFormatException, IOException {
 		
@@ -16,62 +17,76 @@ public class SubstringsAdvanced {
 			int k = Integer.parseInt(params[1]);
 			int q = Integer.parseInt(params[2]);
 			String s = reader.readLine();
-			int[] left2right = left2Right(s, k);
-			int[] right2Left = right2Left(s, k);
+			indexes = new int[s.length()];
+			long[] left2right = left2Right(s, k);
+			int[] candidates = preprocess(s, k);
 			for (int j = 0 ; j < q ; ++j) {
 				String[] query = reader.readLine().split(" ");
 				int l = Integer.parseInt(query[0]) - 1;
 				int r = Integer.parseInt(query[1]) - 1;
-				System.out.println(left2right[s.length() - 1] - left2right[l] - right2Left[r] + 1);
+				int rightBorder = Arrays.binarySearch(candidates, r);
+				if (rightBorder < 0) {
+					rightBorder = -1 * rightBorder - 1;
+					rightBorder = rightBorder == s.length() ? s.length() - 1 : rightBorder;
+				}
+				rightBorder = indexes[rightBorder];
+				rightBorder = rightBorder > l ? rightBorder : l;
+				long n = r - rightBorder + 1;
+				long sum = n * (n + 1) / 2;
+				if (rightBorder > l) {
+					sum += candidates[rightBorder-1] - rightBorder + 2;
+					sum += left2right[rightBorder-1];
+					sum -= left2right[l];
+				}
+				System.out.println(sum);
 			}
 		}
 	}
 	
-	private static int[] right2Left(String s, int k) {
-		int[] result = new int[s.length()];
-		
-		int substringsCount = 0;
-		int j = s.length();
-		int zeroes = 0 ;
-		int ones = 0;
-		
-		for (int i = s.length() - 1 ; i >= 0 ; --i) {
-			result[i] = substringsCount;
-			while (j > 0) {
-				--j;
+	private static int[] preprocess(String s, int k) {
+		int[] candidates = new int[s.length()];
+		int zeroes = 0;
+		int ones = 0; 
+		int j = -1;
+		for (int i = 0 ; i < s.length() ; ++i) {
+			while (j < s.length() - 1) {
+				++j;
 				if (s.charAt(j) == '0') {
 					zeroes++;
 				} else {
 					ones++;
 				}
-				
 				if (zeroes > k) {
 					zeroes = k;
-					++j;
+					--j;
 					break;
 				}
 				if (ones > k) {
 					ones = k;
-					++j;
+					--j;
 					break;
 				}
 			}
-			
+			candidates[i] = j;
+			if (i > 0 && candidates[i] == candidates[i-1]) {
+				indexes[i] = indexes[i-1];
+			} else {
+				indexes[i] = i;
+			}
 			if (s.charAt(i) == '0') {
 				zeroes--;
 			} else {
 				ones--;
 			}
-			substringsCount += i - j + 1;
 		}
 		
-		return result;
+		return candidates;
 	}
-
-	private static int[] left2Right(String s, int k) {
-		int[] result = new int[s.length()];
+ 
+	private static long[] left2Right(String s, int k) {
+		long[] result = new long[s.length()];
 		
-		int substringsCount = 0;
+		long substringsCount = 0;
 		int j = -1;
 		int zeroes = 0 ;
 		int ones = 0;
