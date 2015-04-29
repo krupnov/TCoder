@@ -1,5 +1,6 @@
 package swing;
 
+
 import java.awt.image.BufferedImage;
 
 
@@ -13,7 +14,7 @@ import javax.swing.*;
 
 public class Fractal {
 	
-	private static int max_iteration = 2000;
+	private static int max_iteration = 1000;
 	private static int[] palette = initializePalette();
 	
 	private static int[] initializePalette() {
@@ -25,8 +26,8 @@ public class Fractal {
 		}
 		return palette;
 	}
+	
 	private static void createAndShowGUI() throws IOException {
-		//Create and set up the window.
 		JFrame frame = new JFrame("HelloWorldSwing");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
@@ -43,6 +44,9 @@ public class Fractal {
 	}
 
 	private static void drawFractal(BufferedImage bufferedImage) {
+		int[] histogram = new int[max_iteration];
+		long total = 0;
+		int[][] buffer = new int[bufferedImage.getWidth()][bufferedImage.getHeight()];
 		for (int pX = 0 ; pX < bufferedImage.getWidth() ; ++pX) {
 			for (int pY = 0 ; pY < bufferedImage.getHeight() ; ++pY) {
 				double x0 = ((double)pX / bufferedImage.getWidth() * 3.5) - 2.5;
@@ -56,7 +60,22 @@ public class Fractal {
 					x = xTemp;
 					iteration++;
 				}
-				bufferedImage.setRGB(pX, pY, palette[iteration]);
+				histogram[iteration]++;
+				total++;
+				buffer[pX][pY] = iteration;
+//				bufferedImage.setRGB(pX, pY, palette[iteration]);
+			}
+		}
+		
+		for (int pX = 0 ; pX < bufferedImage.getWidth() ; ++pX) {
+			for (int pY = 0 ; pY < bufferedImage.getHeight() ; ++pY) {
+				double hue = 0.0;
+				for (int i = 0 ; i < buffer[pX][pY] ; ++i) {
+					hue += (double)histogram[i] / total;
+				}
+				
+				int color = palette[(int)((max_iteration - 1) * hue)];
+				bufferedImage.setRGB(pX, pY, color);
 			}
 		}
 	}
