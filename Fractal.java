@@ -100,7 +100,7 @@ public class Fractal {
 				
 				@Override
 				public Void call() throws Exception {
-					processLine(bufferedImage, localX);
+					processColumn(bufferedImage, localX);
 					return null;
 				}
 			});
@@ -113,7 +113,7 @@ public class Fractal {
 		}
 	}
 
-	private static void processLine(BufferedImage bufferedImage, int pX) {
+	private static void processColumn(BufferedImage bufferedImage, int pX) {
 		for (int pY = 0 ; pY < bufferedImage.getHeight() ; ++pY) {
 			double x0 = zoom*(((double)pX / bufferedImage.getWidth() * 3.5) - offset);
 			double y0 = zoom*(1 - ((double)pY / bufferedImage.getHeight() * 2));
