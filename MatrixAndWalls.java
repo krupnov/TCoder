@@ -1,16 +1,17 @@
-package topcoder;
+package coder;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 
 public class MatrixAndWalls {
 
 	private static class Partition {
 		public int count = 0;
 		public Partition parent = null;
+		public int level = 0;
 	}
 	
 	public static void main(String[] args) throws NumberFormatException, IOException {
@@ -22,25 +23,24 @@ public class MatrixAndWalls {
 			short M = Short.parseShort(params[1]);
 			int Q = Integer.parseInt(params[2]);
 			
-			ArrayList<Short>[] queries = new ArrayList[Q];
-			HashMap<Short, HashMap<Short, Integer>> xWalls = new HashMap<Short, HashMap<Short, Integer>>();
-			HashMap<Short, HashMap<Short, Integer>> yWalls = new HashMap<Short, HashMap<Short, Integer>>();
+			LinkedList<short[]> queries = new LinkedList<short[]>();
+			boolean[][] xWalls = new boolean[N][M];
+			boolean[][] yWalls = new boolean[N][M];
 			for (int q = 0 ; q < Q ; ++q) {
 				String[] nextQuery = reader.readLine().split(" ");
-				queries[q] = new ArrayList<Short>();
 				short type = Short.parseShort(nextQuery[0]);
-				parseQueries(queries, xWalls, yWalls, q, nextQuery, type);
+				parseQueries(queries, xWalls, yWalls, nextQuery, type);
 			}
 			
 			Partition[][] partitions = new Partition[N][M];
-			long maxPartitionSize = 1;
+			int maxPartitionSize = 1;
 			for (short x = 0 ; x < N ; ++x) {
 				for (short y = 0 ; y < M ; ++y) {
 					if (partitions[x][y] == null) {
 						partitions[x][y] = new Partition();
 						partitions[x][y].count++;
 					}
-					if (!xWalls.containsKey(x) || !xWalls.get(x).containsKey(y)) {
+					if (!xWalls[x][y]) {
 						if (x < N - 1) {
 							Partition partition = partitions[x+1][y];
 							if (partition == null) {
@@ -55,13 +55,13 @@ public class MatrixAndWalls {
 							}
 						}
 					}
-					if (!yWalls.containsKey(x) || !yWalls.get(x).containsKey(y)) {
+					if (!yWalls[x][y]) {
 						if (y < M - 1) {
 							Partition partition = partitions[x][y+1];
 							if (partition == null) {
 								partitions[x][y+1] = getGrandParent(partitions[x][y]);
 								partitions[x][y+1].count++;
-								partition = partitions[x+1][y];
+								partition = partitions[x][y+1];
 							} else  {
 								partition = mergePartitions(partition, partitions[x][y]);
 							}
@@ -73,37 +73,32 @@ public class MatrixAndWalls {
 				}
 			}
 			long result = 0;
-			for (int q = Q -1 ; q >= 0 ; --q) {
-				ArrayList<Short> query = queries[q];
-				if (query.get(0) == 4) {
+			Iterator<short[]> descendingIterator = queries.descendingIterator();
+			while (descendingIterator.hasNext()) {
+				short[] query = descendingIterator.next();
+				if (query[0] == 4) {
 					result += maxPartitionSize;
 				}
-				if (query.get(0) == 3) {
-					if (getGrandParent(partitions[query.get(1)][query.get(2)]) == 
-							getGrandParent(partitions[query.get(3)][query.get(4)])) {
+				if (query[0] == 3) {
+					if (getGrandParent(partitions[query[1]][query[2]]) == 
+							getGrandParent(partitions[query[3]][query[4]])) {
 						result++;
 					}
 				}
-				if (query.get(0) == 2) {
-					short x = query.get(1);
-					short y = query.get(2);
-					xWalls.get(x).put(y, xWalls.get(x).get(y) - 1);
-					if (xWalls.get(x).get(y) == 0) {
-						Partition merged = mergePartitions(partitions[x][y], partitions[x + 1][y]);
-						if (merged.count > maxPartitionSize) {
-							maxPartitionSize = merged.count;
-						}
+				if (query[0] == 1) {
+					short x = query[1];
+					short y = query[2];
+					Partition merged = mergePartitions(partitions[x][y], partitions[x][y + 1]);
+					if (merged.count > maxPartitionSize) {
+						maxPartitionSize = merged.count;
 					}
 				}
-				if (query.get(0) == 1) {
-					short x = query.get(1);
-					short y = query.get(2);
-					yWalls.get(x).put(y, yWalls.get(x).get(y) - 1);
-					if (yWalls.get(x).get(y) == 0) {
-						Partition merged = mergePartitions(partitions[x][y], partitions[x][y + 1]);
-						if (merged.count > maxPartitionSize) {
-							maxPartitionSize = merged.count;
-						}
+				if (query[0] == 2) {
+					short x = query[1];
+					short y = query[2];
+					Partition merged = mergePartitions(partitions[x][y], partitions[x + 1][y]);
+					if (merged.count > maxPartitionSize) {
+						maxPartitionSize = merged.count;
 					}
 				}
 			}
@@ -111,62 +106,61 @@ public class MatrixAndWalls {
 		}
 	}
 
-	private static void parseQueries(ArrayList<Short>[] queries,
-			HashMap<Short, HashMap<Short, Integer>> xWalls,
-			HashMap<Short, HashMap<Short, Integer>> yWalls, int q, String[] nextQuery,
-			short type) {
+	private static void parseQueries(LinkedList<short[]> queries, boolean[][] xWalls, boolean[][] yWalls, String[] nextQuery, short type) {
 		switch (type) {
 		case 1: {
-				queries[q].add(type);
 				short x = Short.parseShort(nextQuery[1]);
 				x--;
-				queries[q].add(x);
 				short y = Short.parseShort(nextQuery[2]);
 				y--;
-				queries[q].add(y);
-				addWall(yWalls, x, y);
+				if (!yWalls[x][y]) {
+					short[] query = new short[3];
+					query[0] = type;
+					query[1] = x;
+					query[2] = y;
+					yWalls[x][y] = true;
+					queries.add(query);
+				}
 			}
 			break;
 		case 2: {
-				queries[q].add(type);
-				short x = Short.parseShort(nextQuery[1]);
-				x--;
-				queries[q].add(x);
-				short y = Short.parseShort(nextQuery[2]);
-				y--;
-				queries[q].add(y);
-				addWall(xWalls, x, y);
+			short x = Short.parseShort(nextQuery[1]);
+			x--;
+			short y = Short.parseShort(nextQuery[2]);
+			y--;
+			if (!xWalls[x][y]) {
+				short[] query = new short[3];
+				query[0] = type;
+				query[1] = x;
+				query[2] = y;
+				xWalls[x][y] = true;
+				queries.add(query);
+				}
 			}
 			break;
 		case 3: {
-				queries[q].add(type);
+				short[] query = new short[5];
+				query[0] = type;
 				short x1 = Short.parseShort(nextQuery[1]);
 				x1--;
-				queries[q].add(x1);
+				query[1] = x1;
 				short y1 = Short.parseShort(nextQuery[2]);
 				y1--;
-				queries[q].add(y1);
+				query[2] = y1;
 				short x2 = Short.parseShort(nextQuery[3]);
 				x2--;
-				queries[q].add(x2);
+				query[3] = x2;
 				short y2 = Short.parseShort(nextQuery[4]);
 				y2--;
-				queries[q].add(y2);
+				query[4] = y2;
+				queries.add(query);
 			}
 			break;
 		case 4:
-			queries[q].add(type);
+			short[] query = new short[1];
+			query[0] = type;
+			queries.add(query);
 		}
-	}
-
-	private static void addWall(HashMap<Short, HashMap<Short, Integer>> walls, short x, short y) {
-		if (!walls.containsKey(x)) {
-			walls.put(x, new HashMap<Short, Integer>());
-		}
-		if (!walls.get(x).containsKey(y)) {
-			walls.get(x).put(y, 0);
-		}
-		walls.get(x).put(y, walls.get(x).get(y) + 1);
 	}
 
 	private static Partition mergePartitions(Partition first, Partition second) {
@@ -174,6 +168,14 @@ public class MatrixAndWalls {
 		second = getGrandParent(second);
 		if (first == second) {
 			return first;
+		}
+		if (first.level > second.level) {
+			second.parent = first;
+			first.count += second.count;
+			return first;
+		}
+		if (first.level == second.level) {
+			second.level++;
 		}
 		first.parent = second;
 		second.count += first.count;
