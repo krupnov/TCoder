@@ -1,4 +1,4 @@
-package topcoder;
+package coder;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -102,15 +102,74 @@ public class ByteIsle {
 			int[] results = new int[segmentTree.length];
 			result += countVariants(segmentTree, containCounters, results, 0, 0);
 			System.out.println(result);
+			StringBuffer firstResult = new StringBuffer(intervals.length);
 			if (points[0] != 0) {
-				StringBuffer emptyResult = new StringBuffer(intervals.length);
 				for (int i = 0 ; i < intervals.length ; ++i) {
-					emptyResult.append("0");
+					firstResult.append("0");
 				}
-				System.out.println(emptyResult.toString());
+			} else {
+				for (int i = 0 ; i < intervals.length ; ++i) {
+					if (canSkip(segmentTree, results, intervals[i])) {
+						skip(segmentTree, results, intervals[i], 0);
+						firstResult.append("0");
+					} else {
+						firstResult.append("1");
+					}
+				}
 			}
+			System.out.println(firstResult.toString());
 		}
 		reader.close();
+	}
+
+	private static int skip(
+			Interval[] segmentTree, int[] results,
+			Interval interval, int current) {
+		if (results[current] == 0) {
+			return 0;
+		}
+		if (interval.contains(segmentTree[current])) {
+			int temp = results[current];
+			results[current] = 0;
+			return temp;
+		}
+		
+		int result = 0;
+		if (interval.intersects(segmentTree[2 * current + 1])) {
+			result += skip(segmentTree, results, interval, 2*current + 1);
+		}
+		if (interval.intersects(segmentTree[2 * current + 2])) {
+			result += skip(segmentTree, results, interval, 2*current + 2);
+		}
+		results[current] -= result;
+		return result;
+	}
+
+	private static boolean canSkip(Interval[] segmentTree, int[] results,
+			Interval interval) {
+		int skip = getSkip(segmentTree, results, interval, 0);
+		return results[0] > skip;
+	}
+	
+	private static int getSkip(
+			Interval[] segmentTree, int[] results,
+			Interval interval, int current) {
+		if (results[current] == 0) {
+			return 0;
+		}
+		
+		if (interval.contains(segmentTree[current])) {
+			return results[current];
+		}
+		int result = 0;
+		if (interval.intersects(segmentTree[2 * current + 1])) {
+			result += getSkip(segmentTree, results, interval, 2*current + 1);
+		}
+		if (interval.intersects(segmentTree[2 * current + 2])) {
+			result += getSkip(segmentTree, results, interval, 2*current + 2);
+		}
+
+		return result;
 	}
 
 	private static int countVariants(Interval[] segmentTree,
