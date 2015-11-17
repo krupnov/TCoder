@@ -46,7 +46,7 @@ namespace {
 		if (i > e || j < b) {
 			return nullSegment;
 		}
-		if (i >= b && j <= e) {
+		if (b >= i && e <= j) {
 			return T[node];
 		}
 
@@ -107,7 +107,7 @@ int main() {
 		std::cout<<"Case "<<t<<':'<<std::endl;
 		matrix columnTrees(N - K + 1);
 		for (int n = 0 ; n <= N - K ; ++n) {
-			columnTrees[n] = buildColumnTree(n, N - K - 1, rowTrees, N - 1);
+			columnTrees[n] = buildColumnTree(n, n + K - 1, rowTrees, N - 1);
 		}
 
 		for (int m = 0 ; m <= M - K ; ++m) {
