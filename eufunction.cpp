@@ -40,8 +40,14 @@ int main() {
 		if (D % 9 == 0) {
 			period = 1;
 		}
-
-//		number Al = A + (L - 1) * D;
+		--L; --R;
 		number periodSum = computePeriodSum(A, D, period);
+		number left = (L / period) * period;
+		number right = (R / period + 1) * period;
+		number fullCycles = (right - left) / period;
+		number result = periodSum * fullCycles;
+		result -= computePeriodSum(A, D, L - left);
+		result -= computePeriodSum(A + (R + period - right + 1) * D, D, right - R - 1);
+		std::cout<<result<<std::endl;
 	}
 }
