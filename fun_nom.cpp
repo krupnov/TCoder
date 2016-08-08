@@ -30,6 +30,14 @@ public:
 		}
 	}
 
+	std::unique_ptr<GnomIndex> copy() const {
+		std::unique_ptr<GnomIndex> copy(new GnomIndex(-1, gnomes_count));
+		for (int i = 0 ; i < index_size ; ++i) {
+			copy->index[i] = this->index[i];
+		}
+		return copy;
+	}
+
 	class Iterator {
 		const GnomIndex& parent;
 		int _current;
@@ -94,16 +102,16 @@ int main() {
 
 	for (int p = 1 ; p < 9 ; ++p) {
 		for (int i = 0 ; i < N ; ++i) {
-			GnomIndex::Iterator ten_away_iter(power_of_ten[i][0]->iterator());
-			std::unique_ptr<GnomIndex> twenty_away(new GnomIndex(-1, N));
-			while (ten_away_iter.has_next()) {
-				twenty_away->add(*power_of_ten[ten_away_iter.current()][0]);
+			std::unique_ptr<GnomIndex> edge_away(power_of_ten[i][p - 1]->copy());
+			for (int s = 0 ; s < 10 ; ++s) {
+				GnomIndex::Iterator edge_away_iter(edge_away->iterator());
+				std::unique_ptr<GnomIndex> next_away(new GnomIndex(-1, N));
+				while (edge_away_iter.has_next()) {
+					next_away->add(*power_of_ten[edge_away_iter.current()][p - 1]);
+				}
+				edge_away.swap(next_away);
 			}
-			std::unique_ptr<GnomIndex> thirty_away(new GnomIndex(-1, N));
-			GnomIndex::Iterator twenty_away_iter(twenty_away->iterator());
-			while (twenty_away_iter.has_next()) {
-				thirty_away->add(*power_of_ten[twenty_away_iter.current()][0]);
-			}
+			power_of_ten[i][p].swap(edge_away);
 		}
 	}
 
