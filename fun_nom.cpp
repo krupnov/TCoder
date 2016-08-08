@@ -7,6 +7,7 @@
 #include <iostream>
 #include <vector>
 #include <memory>
+#include <sstream>
 
 namespace {
 
@@ -66,7 +67,7 @@ public:
 };
 
 std::unique_ptr<GnomIndex> first_ten[500][10];
-std::unique_ptr<GnomIndex> power_of_ten[500][9];
+std::unique_ptr<GnomIndex> power_of_ten[500][9][10];
 
 }
 
@@ -97,21 +98,23 @@ int main() {
 	}
 
 	for (int i = 0 ; i < N ; ++i) {
-		power_of_ten[i][0].swap(first_ten[i][9]);
+		power_of_ten[i][0][0].swap(first_ten[i][9]);
 	}
 
 	for (int p = 1 ; p < 9 ; ++p) {
 		for (int i = 0 ; i < N ; ++i) {
-			std::unique_ptr<GnomIndex> edge_away(power_of_ten[i][p - 1]->copy());
+			std::unique_ptr<GnomIndex> edge_away(power_of_ten[i][p - 1][0]->copy());
 			for (int s = 0 ; s < 10 ; ++s) {
 				GnomIndex::Iterator edge_away_iter(edge_away->iterator());
 				std::unique_ptr<GnomIndex> next_away(new GnomIndex(-1, N));
 				while (edge_away_iter.has_next()) {
-					next_away->add(*power_of_ten[edge_away_iter.current()][p - 1]);
+					next_away->add(*power_of_ten[edge_away_iter.current()][p - 1][0]);
 				}
+				auto level = next_away->copy();
+				power_of_ten[i][p - 1][s].swap(level);
 				edge_away.swap(next_away);
 			}
-			power_of_ten[i][p].swap(edge_away);
+			power_of_ten[i][p][0].swap(edge_away);
 		}
 	}
 
@@ -120,5 +123,34 @@ int main() {
 	for (int i = 0 ; i < M ; ++i) {
 		int k, x;
 		std::cin>>k>>x;
+		--x;
+		std::unique_ptr<GnomIndex> edge(first_ten[x][k % 10]->copy());
+		k = k / 10;
+		int ten_pow = 0;
+		while (k > 0 && edge->iterator().has_next()) {
+			auto iter(edge->iterator());
+			std::unique_ptr<GnomIndex> next_step(new GnomIndex(-1, N));
+			while (iter.has_next()) {
+				next_step->add(*power_of_ten[iter.current()][ten_pow][k % 10]);
+			}
+			edge.swap(next_step);
+			k = k / 10;
+			++ten_pow;
+		}
+		auto result(edge->iterator());
+		std::stringstream string_stream;
+		int count = 0;
+		while (result.has_next()) {
+			++count;
+			if (count > 0) {
+				string_stream<<' ';
+			}
+			string_stream<<result.current() + 1;
+		}
+		if (count > 0) {
+			std::cout<<count<<std::endl<<string_stream.str()<<std::endl;
+		} else {
+			std::cout<<0<<std::endl<<-1<<std::endl;
+		}
 	}
 }
